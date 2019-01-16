@@ -1,0 +1,17 @@
+version: '3.7'
+services:
+  addreality-postgres:
+    container_name: addreality-postgres
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=addreality
+      - POSTGRES_PASSWORD=arbuz
+      - POSTGRES_DB=addreality
+    networks:
+      - addreality
+
+networks:
+  addreality:
+    name: addreality
