@@ -10,6 +10,10 @@ import (
 	"addreality"
 )
 
+const (
+	Table = "devices"
+)
+
 var (
 	dsn = flag.String("dsn", "postgres://addreality:arbuz@localhost:5432/addreality?sslmode=disable", "set data source name")
 )
@@ -29,9 +33,19 @@ func main() {
 		panic(err)
 	}
 
+	if err := createTable(db); err != nil {
+		panic(err)
+	}
+
 	if err := BulkDevice(db, builder); err != nil {
 		panic(err)
 	}
+}
+
+func createTable(db *sql.DB) error {
+	var query = fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (name TEXT, group_id INTEGER, platform_id INTEGER);", Table)
+	_, err := db.Exec(query)
+	return err
 }
 
 func BulkDevice(db *sql.DB, b addreality.InsertBuilder) error {
@@ -57,7 +71,7 @@ func BulkDevice(db *sql.DB, b addreality.InsertBuilder) error {
 	}
 
 	for _, b := range batches {
-		var query = fmt.Sprintf("INSERT INTO devices (name, group_id, platform_id) VALUES %s;", b.Query)
+		var query = fmt.Sprintf("INSERT INTO %s (name, group_id, platform_id) VALUES %s;", Table, b.Query)
 		_, err := db.Exec(query, b.Args...)
 		if err != nil {
 			return err

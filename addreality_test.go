@@ -23,7 +23,7 @@ var (
 		maxParams int
 	}{
 		{"pgsql", addreality.PgSQLDriver, addreality.PgSQLMaxLine, addreality.PgSQLMaxParams},
-		// {"mssql", addreality.MSSQLDriver, addreality.MSSQLMaxLine, addreality.MSSQLMaxParams},
+		{"mssql", addreality.MSSQLDriver, addreality.MSSQLMaxLine, addreality.MSSQLMaxParams},
 	}
 )
 
