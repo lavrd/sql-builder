@@ -1,4 +1,4 @@
-.PHONY: start stop up down
+.PHONY: start stop up down itest
 
 start:
 	docker-compose start
@@ -11,3 +11,6 @@ up:
 
 down:
 	docker-compose down
+
+itest:
+	go run test/test.go

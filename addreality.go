@@ -2,8 +2,8 @@ package addreality
 
 import (
 	"bytes"
-	"database/sql"
 	"errors"
+	"fmt"
 	"math"
 	"text/template"
 )
@@ -61,6 +61,7 @@ type Builder struct {
 	curLineCount   int
 	bqLen          int
 	BatchQueries   []*BatchQuery
+	Delimiter      int
 }
 
 func (b *Builder) GetMaxLine() int {
@@ -75,6 +76,8 @@ func (b *Builder) Append(args ...interface{}) error {
 	if len(args) > b.MaxParams {
 		return ErrTooManyLineParams
 	}
+
+	b.Delimiter = len(args)
 
 	if (b.curParamsCount+len(args) > b.MaxParams) || (b.curLineCount == b.MaxLine) {
 		b.curLineCount = 0
@@ -91,7 +94,7 @@ func (b *Builder) Append(args ...interface{}) error {
 	if curbq == nil {
 		curbq = &BatchQuery{}
 	}
-	curbq.Args = append(curbq.Args, args)
+	curbq.Args = append(curbq.Args, args...)
 
 	b.BatchQueries[b.bqLen-1] = curbq
 	b.curLineCount++
@@ -101,59 +104,57 @@ func (b *Builder) Append(args ...interface{}) error {
 }
 
 func (b *Builder) ToSQL() ([]*BatchQuery, error) {
-	pattern := `
-		{{range .Args}}({{range .}}{{.}},{{end}}),{{end}}
-	`
+	pattern := `{{range .}}({{range .Line}}${{.}},{{end}}),{{end}}`
 
 	tmpl, err := template.New("query").Parse(pattern)
 	if err != nil {
 		return nil, err
 	}
 
+	type Param struct {
+		Line []int
+	}
+
+	var params []Param
+
 	for _, bq := range b.BatchQueries {
+		var line = make([]int, 0)
+
+		for asi := range bq.Args {
+			if asi%b.Delimiter == 0 && asi != 0 {
+				params = append(params, Param{line})
+				line = make([]int, 0)
+
+			}
+			line = append(line, asi+1)
+		}
+
+		params = append(params, Param{line})
+
 		var buffer = bytes.NewBuffer([]byte{})
-		err = tmpl.Execute(buffer, bq)
+		err = tmpl.Execute(buffer, params)
 		if err != nil {
 			return nil, err
 		}
 
-		bq.Query = buffer.String()
+		str := buffer.String()
+		runes := []rune(str)
+	loop:
+		for i, char := range str {
+			if i+1 != len(str) {
+				cur := fmt.Sprintf("%c", char)
+				next := fmt.Sprintf("%c", str[i+1])
+				if next == ")" && cur == "," {
+					runes[i] = ' '
+					str = string(runes)
+					goto loop
+				}
+			}
+		}
+
+		runes[len(runes)-1] = ' '
+		bq.Query = string(runes)
 	}
 
 	return b.BatchQueries, nil
-}
-
-func BulkDevice(db *sql.DB) error {
-	// rows := []struct {
-	// 	Name       string
-	// 	GroupID    uint
-	// 	PlatformID uint
-	// }{
-	// 	{Name: "device1", GroupID: 1, PlatformID: 5281},
-	// 	{Name: "device2", GroupID: 1, PlatformID: 5281},
-	// 	{Name: "device3", GroupID: 1, PlatformID: 5281},
-	// }
-	//
-	// var b InsertBuilder
-	//
-	// for _, r := range rows {
-	// 	b.Append(r.Name, r.GroupID, r.PlatformID)
-	// }
-	//
-	// batches, err := b.ToSQL()
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// for _, b := range batches {
-	// 	_, err := db.Exec(
-	// 		"INSERT INTO devices ('name', 'group_id', 'platform_id') VALUES "+b.Query,
-	// 		b.Args...,
-	// 	)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	//
-	return nil
 }

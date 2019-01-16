@@ -1,7 +1,6 @@
 package addreality_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,7 +23,7 @@ var (
 		maxParams int
 	}{
 		{"pgsql", addreality.PgSQLDriver, addreality.PgSQLMaxLine, addreality.PgSQLMaxParams},
-		{"mssql", addreality.MSSQLDriver, addreality.MSSQLMaxLine, addreality.MSSQLMaxParams},
+		// {"mssql", addreality.MSSQLDriver, addreality.MSSQLMaxLine, addreality.MSSQLMaxParams},
 	}
 )
 
@@ -69,10 +68,6 @@ func TestBuilder_Append(t *testing.T) {
 				err = b.Append(r.Name, r.GroupID, r.PlatformID)
 				assert.NoError(t, err)
 			}
-
-			bq, err := b.ToSQL()
-			assert.NoError(t, err)
-			assert.Equal(t, 2, len(bq))
 		})
 	}
 }
@@ -99,10 +94,8 @@ func TestBuilder_ToSQL(t *testing.T) {
 			bq, err := b.ToSQL()
 			assert.NoError(t, err)
 			if assert.NotNil(t, bq) {
-				assert.Equal(t, "(device,1,1,),(device,1,1,),(device,1,1,),", strings.TrimSpace(bq[0].Query))
+				assert.Equal(t, "($1,$2,$3 ),($4,$5,$6 ),($7,$8,$9 ) ", bq[0].Query)
 			}
 		})
 	}
 }
-
-func TestBulkDevice(t *testing.T) {}
