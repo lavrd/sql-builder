@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"errors"
-	"html/template"
 	"math"
+	"text/template"
 )
 
 const (
@@ -30,7 +30,7 @@ type BatchQuery struct {
 
 type InsertBuilder interface {
 	Append(args ...interface{}) error
-	ToSQL() ([]BatchQuery, error)
+	ToSQL() ([]*BatchQuery, error)
 	GetMaxLine() int
 	GetMaxParams() int
 }
@@ -60,7 +60,7 @@ type Builder struct {
 	curParamsCount int
 	curLineCount   int
 	bqLen          int
-	BatchQueries   []BatchQuery
+	BatchQueries   []*BatchQuery
 }
 
 func (b *Builder) GetMaxLine() int {
@@ -80,14 +80,17 @@ func (b *Builder) Append(args ...interface{}) error {
 		b.curLineCount = 0
 		b.curParamsCount = 0
 		b.bqLen++
-		b.BatchQueries = append(b.BatchQueries, BatchQuery{})
+		b.BatchQueries = append(b.BatchQueries, &BatchQuery{})
 	}
 
 	if b.BatchQueries == nil {
-		b.BatchQueries = make([]BatchQuery, 1)
+		b.BatchQueries = make([]*BatchQuery, 1)
 	}
 
 	curbq := b.BatchQueries[b.bqLen-1]
+	if curbq == nil {
+		curbq = &BatchQuery{}
+	}
 	curbq.Args = append(curbq.Args, args)
 
 	b.BatchQueries[b.bqLen-1] = curbq
@@ -97,21 +100,24 @@ func (b *Builder) Append(args ...interface{}) error {
 	return nil
 }
 
-func (b *Builder) ToSQL() ([]BatchQuery, error) {
+func (b *Builder) ToSQL() ([]*BatchQuery, error) {
 	pattern := `
-{{.Args}}
-{{end}}
-`
+		{{range .Args}}({{range .}}{{.}},{{end}}),{{end}}
+	`
 
 	tmpl, err := template.New("query").Parse(pattern)
 	if err != nil {
 		return nil, err
 	}
 
-	var buffer = bytes.NewBuffer([]byte{})
-	err = tmpl.Execute(buffer, struct{ Args []interface{} }{args})
-	if err != nil {
-		return nil, err
+	for _, bq := range b.BatchQueries {
+		var buffer = bytes.NewBuffer([]byte{})
+		err = tmpl.Execute(buffer, bq)
+		if err != nil {
+			return nil, err
+		}
+
+		bq.Query = buffer.String()
 	}
 
 	return b.BatchQueries, nil

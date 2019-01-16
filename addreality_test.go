@@ -1,6 +1,7 @@
 package addreality_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -76,6 +77,32 @@ func TestBuilder_Append(t *testing.T) {
 	}
 }
 
-func TestBuilder_ToSQL(t *testing.T) {}
+func TestBuilder_ToSQL(t *testing.T) {
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var (
+				rows = Rows{}
+			)
+
+			for i := 0; i < 3; i++ {
+				rows = append(rows, Row{Name: "device", GroupID: 1, PlatformID: 1})
+			}
+
+			var b, err = addreality.NewInsertBuilder(c.driver)
+			assert.NoError(t, err)
+
+			for _, r := range rows {
+				err = b.Append(r.Name, r.GroupID, r.PlatformID)
+				assert.NoError(t, err)
+			}
+
+			bq, err := b.ToSQL()
+			assert.NoError(t, err)
+			if assert.NotNil(t, bq) {
+				assert.Equal(t, "(device,1,1,),(device,1,1,),(device,1,1,),", strings.TrimSpace(bq[0].Query))
+			}
+		})
+	}
+}
 
 func TestBulkDevice(t *testing.T) {}
