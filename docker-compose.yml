@@ -1,17 +1,19 @@
 version: '3.7'
 services:
-  addreality-postgres:
-    container_name: addreality-postgres
+  postgres:
+    container_name: sqlbuilder-postgres
     image: postgres:alpine
     ports:
-      - 5432:5432
+      - $POSTGRES_PORT:5432
     environment:
-      - POSTGRES_USER=addreality
-      - POSTGRES_PASSWORD=arbuz
-      - POSTGRES_DB=addreality
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_DB=$POSTGRES_DB
     networks:
-      - addreality
+      - sqlbuilder
+    env_file:
+      - .env
 
 networks:
-  addreality:
-    name: addreality
+  sqlbuilder:
+    name: sqlbuilder

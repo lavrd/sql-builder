@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"addreality"
+	"sqlbuilder"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 )
 
 var (
-	dsn = flag.String("dsn", "postgres://addreality:arbuz@localhost:5432/addreality?sslmode=disable", "set data source name")
+	dsn = flag.String("dsn", "postgres://sqlbuilder:arbuz@localhost:5432/sqlbuilder?sslmode=disable", "set data source name")
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 
-	builder, err := addreality.NewInsertBuilder(addreality.PgSQLDriver)
+	builder, err := sqlbuilder.NewInsertBuilder(sqlbuilder.PgSQLDriver)
 	if err != nil {
 		panic(err)
 	}
@@ -40,6 +40,8 @@ func main() {
 	if err := BulkDevice(db, builder); err != nil {
 		panic(err)
 	}
+
+	fmt.Println("Tested successfully")
 }
 
 func createTable(db *sql.DB) error {
@@ -48,7 +50,7 @@ func createTable(db *sql.DB) error {
 	return err
 }
 
-func BulkDevice(db *sql.DB, b addreality.InsertBuilder) error {
+func BulkDevice(db *sql.DB, b sqlbuilder.InsertBuilder) error {
 	rows := []struct {
 		Name       string
 		GroupID    int

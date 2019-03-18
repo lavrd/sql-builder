@@ -1,11 +1,11 @@
-package addreality_test
+package sqlbuilder_test
 
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"sqlbuilder"
 
-	"addreality"
+	"github.com/stretchr/testify/assert"
 )
 
 type Row struct {
@@ -22,15 +22,15 @@ var (
 		maxLine   int
 		maxParams int
 	}{
-		{"pgsql", addreality.PgSQLDriver, addreality.PgSQLMaxLine, addreality.PgSQLMaxParams},
-		{"mssql", addreality.MSSQLDriver, addreality.MSSQLMaxLine, addreality.MSSQLMaxParams},
+		{"pgsql", sqlbuilder.PgSQLDriver, sqlbuilder.PgSQLMaxLine, sqlbuilder.PgSQLMaxParams},
+		{"mssql", sqlbuilder.MSSQLDriver, sqlbuilder.MSSQLMaxLine, sqlbuilder.MSSQLMaxParams},
 	}
 )
 
 func TestNewInsertBuilder(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			builder, err := addreality.NewInsertBuilder(c.driver)
+			builder, err := sqlbuilder.NewInsertBuilder(c.driver)
 			assert.NoError(t, err)
 			assert.NotNil(t, builder)
 			assert.Equal(t, c.maxLine, builder.GetMaxLine())
@@ -47,12 +47,12 @@ func TestBuilder_Append(t *testing.T) {
 			)
 
 			switch c.driver {
-			case addreality.PgSQLDriver:
+			case sqlbuilder.PgSQLDriver:
 				// 3 - params count in a row, 1 - for new batch query
 				for i := 0; i < c.maxParams/3+1; i++ {
 					rows = append(rows, Row{Name: "device", GroupID: 1, PlatformID: 1})
 				}
-			case addreality.MSSQLDriver:
+			case sqlbuilder.MSSQLDriver:
 				// 1 - for new batch query
 				for i := 0; i < c.maxLine+1; i++ {
 					rows = append(rows, Row{Name: "device", GroupID: 1, PlatformID: 1})
@@ -61,7 +61,7 @@ func TestBuilder_Append(t *testing.T) {
 				t.Errorf("driver must be set, actual: %v", c.driver)
 			}
 
-			var b, err = addreality.NewInsertBuilder(c.driver)
+			var b, err = sqlbuilder.NewInsertBuilder(c.driver)
 			assert.NoError(t, err)
 
 			for _, r := range rows {
@@ -83,7 +83,7 @@ func TestBuilder_ToSQL(t *testing.T) {
 				rows = append(rows, Row{Name: "device", GroupID: 1, PlatformID: 1})
 			}
 
-			var b, err = addreality.NewInsertBuilder(c.driver)
+			var b, err = sqlbuilder.NewInsertBuilder(c.driver)
 			assert.NoError(t, err)
 
 			for _, r := range rows {
