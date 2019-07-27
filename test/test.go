@@ -10,15 +10,12 @@ import (
 	"sqlbuilder"
 )
 
-const (
-	Table = "devices"
-)
-
-var (
-	dsn = flag.String("dsn", "postgres://sqlbuilder:arbuz@localhost:5432/sqlbuilder?sslmode=disable", "set data source name")
-)
+const Table = "devices"
 
 func main() {
+	dsn := flag.String("dsn", "postgres://sqlbuilder:arbuz@localhost:5432/sqlbuilder?sslmode=disable", "set data source name")
+	flag.Parse()
+
 	db, err := sql.Open("postgres", *dsn)
 	if err != nil {
 		panic(err)

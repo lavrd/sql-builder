@@ -42,9 +42,7 @@ func TestNewInsertBuilder(t *testing.T) {
 func TestBuilder_Append(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			var (
-				rows = Rows{}
-			)
+			rows := Rows{}
 
 			switch c.driver {
 			case sqlbuilder.PgSQLDriver:
@@ -75,9 +73,7 @@ func TestBuilder_Append(t *testing.T) {
 func TestBuilder_ToSQL(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			var (
-				rows = Rows{}
-			)
+			rows := Rows{}
 
 			for i := 0; i < 3; i++ {
 				rows = append(rows, Row{Name: "device", GroupID: 1, PlatformID: 1})

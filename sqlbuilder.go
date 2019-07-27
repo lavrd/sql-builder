@@ -28,6 +28,10 @@ type BatchQuery struct {
 	Args  []interface{}
 }
 
+type Param struct {
+	Line []int
+}
+
 type InsertBuilder interface {
 	Append(args ...interface{}) error
 	ToSQL() ([]*BatchQuery, error)
@@ -109,10 +113,6 @@ func (b *Builder) ToSQL() ([]*BatchQuery, error) {
 	tmpl, err := template.New("query").Parse(pattern)
 	if err != nil {
 		return nil, err
-	}
-
-	type Param struct {
-		Line []int
 	}
 
 	var params []Param
